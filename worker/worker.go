@@ -31,6 +31,7 @@ func (w *Worker) ListenAndServe() error {
 	for {
 		select {
 		case <-w.cancelChan:
+			time.Sleep(5 * time.Second)  // induce shutdown to fail by context canceled
 			return nil
 		default:
 			fmt.Printf(">> worker %d doing work...\n", w.id)
@@ -55,9 +56,9 @@ func (w *Worker) Shutdown(ctx context.Context) error {
 		close(w.cancelChan)
 	})
 
-	time.Sleep(5 * time.Second)  // induce shutdown to fail by context canceled
 	select {
 	case <-w.doneChan:
+		fmt.Printf(">> done before time is out: %d\n", w.id)
 		return nil
 	case <-ctx.Done():
 		return fmt.Errorf("Shutdown timeout: %w", ctx.Err())
