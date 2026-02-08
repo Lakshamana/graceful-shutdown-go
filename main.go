@@ -38,9 +38,7 @@ func makeCtx(parent context.Context) (context.Context, context.CancelFunc) {
 	return ctx, cancel
 }
 
-func startWorker(idx int, ctx context.Context, wg *sync.WaitGroup, lines chan<- struct{}, shutdownBarrier <-chan struct{}) {
-	defer wg.Done()
-
+func startWorker(idx int, ctx context.Context, lines chan<- struct{}, shutdownBarrier <-chan struct{}) {
 	w := worker.NewWorker(idx)
 
 	go func() {
@@ -78,10 +76,11 @@ func main() {
 	shutdownBarrier := make(chan struct{})
 
 	var wg sync.WaitGroup
-	wg.Add(coroutines)
 
 	for i := range coroutines {
-		go startWorker(i, ctx, &wg, lines, shutdownBarrier)
+		wg.Go(func() {
+			startWorker(i, ctx, lines, shutdownBarrier)
+		})
 	}
 
 	go func() {
